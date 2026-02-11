@@ -1,6 +1,8 @@
 import { prisma } from '@/lib/prisma';
 import OpenAI from 'openai';
 
+export const dynamic = 'force-dynamic';
+
 async function checkDatabaseConnection(): Promise<boolean> {
   try {
     await prisma.$queryRaw`SELECT 1`;
