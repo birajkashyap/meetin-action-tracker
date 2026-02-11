@@ -2,11 +2,9 @@
 
 import { prisma } from '@/lib/prisma';
 import { EXTRACTION_PROMPT_V1 } from '@/lib/prompts';
-import OpenAI from 'openai';
+import { GoogleGenerativeAI } from '@google/generative-ai';
 
-const openai = new OpenAI({
-  apiKey: process.env.OPENAI_API_KEY,
-});
+const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY || '');
 
 interface ActionItemInput {
   description: string;
@@ -36,21 +34,18 @@ export async function processTranscript(text: string) {
       };
     }
 
-    // Call OpenAI API
-    const completion = await openai.chat.completions.create({
-      model: 'gpt-4o-mini',
-      messages: [
-        { role: 'system', content: EXTRACTION_PROMPT_V1 },
-        {
-          role: 'user',
-          content: `Extract action items from this meeting transcript:\n\n${text}`,
-        },
-      ],
-      response_format: { type: 'json_object' },
-      temperature: 0.3,
+    // Call Gemini API
+    const model = genAI.getGenerativeModel({
+      model: 'gemini-1.5-flash',
+      generationConfig: {
+        responseMimeType: 'application/json',
+      },
     });
 
-    const responseText = completion.choices[0]?.message?.content;
+    const prompt = `${EXTRACTION_PROMPT_V1}\n\nTranscript:\n${text}`;
+    const result = await model.generateContent(prompt);
+    const responseText = result.response.text();
+
     if (!responseText) {
       throw new Error('No response from LLM');
     }
@@ -69,7 +64,7 @@ export async function processTranscript(text: string) {
         metadata: {
           wordCount: text.split(/\s+/).length,
           itemCount: llmResponse.actionItems.length,
-          modelUsed: 'gpt-4o-mini',
+          modelUsed: 'gemini-1.5-flash',
         },
         actionItems: {
           create: llmResponse.actionItems.map((item) => ({

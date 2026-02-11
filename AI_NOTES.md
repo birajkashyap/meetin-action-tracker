@@ -37,27 +37,28 @@
 
 ## LLM Provider Choice
 
-### Selected: OpenAI GPT-4o-mini
+### Selected: Google Gemini 1.5 Flash
 
 **Rationale:**
-1. **Cost-effective**: $0.15 per 1M input tokens, $0.60 per 1M output tokens (95% cheaper than GPT-4)
-2. **JSON mode**: Built-in `response_format: { type: "json_object" }` ensures valid JSON output
+1. **Cost-effective**: Free tier available with generous quotas, production pricing very competitive
+2. **JSON mode**: Built-in `responseMimeType: 'application/json'` ensures valid JSON output
 3. **Speed**: ~1-2 second response times for typical transcripts
-4. **Reliability**: Very good at following structured extraction instructions
-5. **API simplicity**: Official OpenAI SDK with excellent TypeScript support
+4. **Reliability**: Excellent at following structured extraction instructions
+5. **API simplicity**: Official Google Generative AI SDK with excellent TypeScript support
+6. **Availability**: User had Gemini API key readily available
 
 **Alternatives Considered:**
-- **GPT-4**: Overkill for this task, 20x more expensive
-- **Anthropic Claude**: Great quality but more expensive, no built-in JSON mode
-- **Google Gemini**: Considered but OpenAI's structured outputs are more mature
+- **OpenAI GPT-4o-mini**: Great quality but requires paid API key
+- **Anthropic Claude**: Great quality but more expensive, requires different setup
+- **GPT-4**: Overkill for this task, expensive
 
 ## Prompt Engineering Approach
 
 - **Version control**: Prompt stored in `lib/prompts.ts` as `EXTRACTION_PROMPT_V1` for auditability
 - **Explicit rules**: Clear enumeration of what to extract and what to skip
 - **Output schema**: Detailed JSON structure specification to minimize parsing errors
-- **Temperature**: Set to 0.3 for consistency while allowing some flexibility
-- **Testing**: Iterated 3 times based on real transcript testing to improve quality
+- **JSON response mode**: Gemini configured with `responseMimeType: 'application/json'` for reliable parsing
+- **Testing**: Iterated based on Gemini's response format to optimize quality
 
 ## AI Tools Used During Development
 

@@ -1,8 +1,9 @@
 // LLM Extraction Prompt - Version 1
 // Created: 2026-02-11
+// Updated: 2026-02-12 (switched to Gemini)
 // Purpose: Extract action items from meeting transcripts
 
-export const EXTRACTION_PROMPT_V1 = `You are an expert meeting minutes analyzer. Extract action items from meeting transcripts.
+export const EXTRACTION_PROMPT_V1 = `Extract action items from the meeting transcript.
 
 RULES:
 1. Only extract clear, actionable tasks (not discussions or questions)
@@ -12,17 +13,15 @@ RULES:
 5. Be conservative: skip ambiguous items
 6. Generate 1-2 relevant tags per item (e.g., "urgent", "follow-up", "research", "review")
 
-OUTPUT FORMAT:
-Return a JSON object with this exact structure:
+Return a JSON object with this structure:
 {
   "actionItems": [
     {
       "description": "Clear, concise task description",
-      "owner": "Name" | null,
-      "dueDate": "YYYY-MM-DD" | null,
+      "owner": "Name" or null,
+      "dueDate": "YYYY-MM-DD" or null,
       "tags": ["tag1", "tag2"]
     }
   ]
-}
+}`;
 
-Return ONLY valid JSON. Do not include explanatory text.`;

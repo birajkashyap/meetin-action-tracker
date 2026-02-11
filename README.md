@@ -19,7 +19,7 @@ A web application that extracts and manages action items from meeting transcript
 - **Frontend**: Next.js 14 (App Router), React, TypeScript, Tailwind CSS
 - **Backend**: Next.js Server Actions
 - **Database**: PostgreSQL (Prisma ORM)
-- **AI**: OpenAI GPT-4o-mini
+- **AI**: Google Gemini 1.5 Flash
 - **Hosting**: Vercel
 
 ## Setup Instructions
@@ -28,7 +28,7 @@ A web application that extracts and manages action items from meeting transcript
 
 - Node.js 18+ installed
 - PostgreSQL database (Neon, Vercel Postgres, or local)
-- OpenAI API key
+- Google Gemini API key (free from https://aistudio.google.com/app/apikey)
 
 ### Installation
 
@@ -50,7 +50,7 @@ cp .env.example .env
 
 Edit `.env` and add:
 - `DATABASE_URL`: Your PostgreSQL connection string
-- `OPENAI_API_KEY`: Your OpenAI API key
+- `GEMINI_API_KEY`: Your Google Gemini API key
 
 4. Initialize the database:
 ```bash

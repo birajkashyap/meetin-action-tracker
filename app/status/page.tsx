@@ -1,5 +1,5 @@
 import { prisma } from '@/lib/prisma';
-import OpenAI from 'openai';
+import { GoogleGenerativeAI } from '@google/generative-ai';
 
 export const dynamic = 'force-dynamic';
 
@@ -14,12 +14,13 @@ async function checkDatabaseConnection(): Promise<boolean> {
 
 async function checkLLMConnection(): Promise<boolean> {
   try {
-    if (!process.env.OPENAI_API_KEY) {
+    if (!process.env.GEMINI_API_KEY) {
       return false;
     }
-    const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
+    const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
+    const model = genAI.getGenerativeModel({ model: 'gemini-1.5-flash' });
     // Simple ping test
-    await openai.models.list();
+    await model.generateContent('Hello');
     return true;
   } catch {
     return false;
@@ -99,12 +100,12 @@ export default async function StatusPage() {
                 <p className="font-medium text-gray-900">
                   {llmConnected ? 'Connected' : 'Disconnected'}
                 </p>
-                <p className="text-sm text-gray-600">OpenAI API (gpt-4o-mini)</p>
+                <p className="text-sm text-gray-600">Google Gemini 1.5 Flash</p>
               </div>
             </div>
             {!llmConnected && (
               <div className="mt-2 bg-red-50 border border-red-200 rounded p-3 text-sm text-red-800">
-                Unable to connect to OpenAI API. Check OPENAI_API_KEY environment
+                Unable to connect to Gemini API. Check GEMINI_API_KEY environment
                 variable.
               </div>
             )}
@@ -129,9 +130,9 @@ export default async function StatusPage() {
                 </span>
               </div>
               <div className="flex justify-between">
-                <span className="text-gray-600">OpenAI Key Configured:</span>
+                <span className="text-gray-600">Gemini Key Configured:</span>
                 <span className="font-medium">
-                  {process.env.OPENAI_API_KEY ? '✅ Yes' : '❌ No'}
+                  {process.env.GEMINI_API_KEY ? '✅ Yes' : '❌ No'}
                 </span>
               </div>
             </div>
