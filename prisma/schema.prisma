@@ -1,0 +1,39 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+model Transcript {
+  id          String   @id @default(cuid())
+  rawText     String   @db.Text
+  processedAt DateTime @default(now())
+  metadata    Json?
+  
+  actionItems ActionItem[]
+  
+  @@index([processedAt(sort: Desc)])
+}
+
+model ActionItem {
+  id          String    @id @default(cuid())
+  description String    @db.Text
+  owner       String?
+  dueDate     DateTime?
+  isDone      Boolean   @default(false)
+  tags        String[]  @default([])
+  
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+  
+  transcriptId String
+  transcript   Transcript @relation(fields: [transcriptId], references: [id], onDelete: Cascade)
+  
+  @@index([transcriptId])
+  @@index([isDone])
+}
