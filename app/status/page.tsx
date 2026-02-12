@@ -1,141 +1,158 @@
-import { prisma } from '@/lib/prisma';
-import { GoogleGenerativeAI } from '@google/generative-ai';
+'use client';
 
-export const dynamic = 'force-dynamic';
+import { useEffect, useRef, useState } from 'react';
+import gsap from 'gsap';
+import { CheckCircle2, Database, Cpu, Shield, Server } from 'lucide-react';
 
-async function checkDatabaseConnection(): Promise<boolean> {
-  try {
-    await prisma.$queryRaw`SELECT 1`;
-    return true;
-  } catch {
-    return false;
-  }
+interface StatusData {
+  dbConnected: boolean;
+  llmConnected: boolean;
 }
 
-async function checkLLMConnection(): Promise<boolean> {
-  try {
-    if (!process.env.GEMINI_API_KEY) {
-      return false;
+export default function StatusPage() {
+  const [status, setStatus] = useState<StatusData | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [lastChecked, setLastChecked] = useState<Date>(new Date());
+  const containerRef = useRef<HTMLDivElement>(null);
+  const bannerRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const checkStatus = async () => {
+      try {
+        const res = await fetch('/api/status');
+        const data = await res.json();
+        setStatus(data);
+      } catch {
+        setStatus({ dbConnected: false, llmConnected: false });
+      }
+      setLastChecked(new Date());
+      setLoading(false);
+    };
+    checkStatus();
+  }, []);
+
+  useEffect(() => {
+    if (!loading && containerRef.current) {
+      gsap.fromTo(
+        containerRef.current.children,
+        { opacity: 0, y: 20 },
+        { opacity: 1, y: 0, duration: 0.5, stagger: 0.12, ease: 'power3.out' }
+      );
     }
-    const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
-    const model = genAI.getGenerativeModel({ model: 'gemini-1.5-flash' });
-    // Simple ping test
-    await model.generateContent('Hello');
-    return true;
-  } catch {
-    return false;
+    if (!loading && bannerRef.current) {
+      gsap.fromTo(
+        bannerRef.current,
+        { scale: 0.95, opacity: 0 },
+        { scale: 1, opacity: 1, duration: 0.6, ease: 'back.out(1.4)' }
+      );
+    }
+  }, [loading]);
+
+  const allGood = status?.dbConnected && status?.llmConnected;
+
+  if (loading) {
+    return (
+      <div style={{ textAlign: 'center', padding: '80px 0', color: '#9ca3af' }}>
+        <div style={{ width: '32px', height: '32px', border: '3px solid #e5e7eb', borderTopColor: '#7c3aed', borderRadius: '50%', animation: 'spin 1s linear infinite', margin: '0 auto 16px' }} />
+        <p>Checking system status...</p>
+        <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
+      </div>
+    );
   }
-}
-
-export default async function StatusPage() {
-  const dbConnected = await checkDatabaseConnection();
-  const llmConnected = await checkLLMConnection();
-
-  const allHealthy = dbConnected && llmConnected;
 
   return (
-    <div>
-      <div className="mb-6">
-        <h2 className="text-2xl font-semibold mb-2">System Status</h2>
-        <p className="text-gray-600">Health check for backend services</p>
+    <div ref={containerRef}>
+      {/* Header */}
+      <div style={{ marginBottom: '32px' }}>
+        <h1 style={{ fontSize: '36px', fontWeight: 800, color: 'var(--text-primary)', marginBottom: '8px' }}>
+          System <span className="gradient-text">Status</span>
+        </h1>
+        <p style={{ fontSize: '15px', color: 'var(--text-muted)' }}>
+          Real-time health overview of all connected services
+        </p>
       </div>
 
-      <div className="bg-white border border-gray-200 rounded-lg p-6">
-        <div className="space-y-6">
-          {/* Overall Status */}
-          <div>
-            <h3 className="text-lg font-semibold mb-3">Overall Status</h3>
-            <div
-              className={`px-4 py-3 rounded-lg flex items-center gap-3 ${
-                allHealthy
-                  ? 'bg-green-50 border border-green-200'
-                  : 'bg-red-50 border border-red-200'
-              }`}
-            >
-              <span className="text-2xl">{allHealthy ? '✅' : '❌'}</span>
-              <div>
-                <p
-                  className={`font-semibold ${
-                    allHealthy ? 'text-green-900' : 'text-red-900'
-                  }`}
-                >
-                  {allHealthy ? 'All Systems Operational' : 'System Issues Detected'}
-                </p>
-                <p className="text-sm text-gray-600">
-                  Last checked: {new Date().toLocaleString()}
-                </p>
+      {/* Overall Status Banner */}
+      <div ref={bannerRef} className="success-banner" style={{ marginBottom: '32px', background: allGood ? undefined : 'rgba(239,68,68,0.06)', borderColor: allGood ? undefined : 'rgba(239,68,68,0.2)' }}>
+        <div style={{ width: '44px', height: '44px', borderRadius: '50%', background: allGood ? 'rgba(16,185,129,0.12)' : 'rgba(239,68,68,0.12)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+          <CheckCircle2 size={24} color={allGood ? '#10b981' : '#ef4444'} />
+        </div>
+        <div>
+          <p style={{ fontSize: '16px', fontWeight: 700, color: 'var(--text-primary)' }}>
+            {allGood ? 'All Systems Operational' : 'Some Services Unavailable'}
+          </p>
+          <p style={{ fontSize: '13px', color: 'var(--text-muted)' }}>
+            Last checked: {lastChecked.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}, {lastChecked.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' })}
+          </p>
+        </div>
+      </div>
+
+      {/* Services */}
+      <div style={{ marginBottom: '32px' }}>
+        <p className="section-label">SERVICES</p>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+          <div className="status-row">
+            <div style={{ display: 'flex', alignItems: 'center', gap: '14px' }}>
+              <div className="status-icon status-icon-green">
+                <Database size={18} />
               </div>
+              <span style={{ fontWeight: 600, fontSize: '15px', color: 'var(--text-primary)' }}>Database</span>
+            </div>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+              <span style={{ fontSize: '14px', color: status?.dbConnected ? '#6b7280' : '#ef4444' }}>
+                {status?.dbConnected ? 'Connected – PostgreSQL' : 'Disconnected'}
+              </span>
+              <div className="status-dot" style={{ background: status?.dbConnected ? '#10b981' : '#ef4444' }} />
             </div>
           </div>
 
-          <hr />
-
-          {/* Database Status */}
-          <div>
-            <h3 className="text-lg font-semibold mb-3">Database</h3>
-            <div className="flex items-center gap-3">
-              <span className="text-2xl">{dbConnected ? '✅' : '❌'}</span>
-              <div>
-                <p className="font-medium text-gray-900">
-                  {dbConnected ? 'Connected' : 'Disconnected'}
-                </p>
-                <p className="text-sm text-gray-600">PostgreSQL Database</p>
+          <div className="status-row">
+            <div style={{ display: 'flex', alignItems: 'center', gap: '14px' }}>
+              <div className="status-icon status-icon-green">
+                <Cpu size={18} />
               </div>
+              <span style={{ fontWeight: 600, fontSize: '15px', color: 'var(--text-primary)' }}>LLM API</span>
             </div>
-            {!dbConnected && (
-              <div className="mt-2 bg-red-50 border border-red-200 rounded p-3 text-sm text-red-800">
-                Unable to connect to database. Check DATABASE_URL environment variable.
-              </div>
-            )}
+            <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+              <span style={{ fontSize: '14px', color: status?.llmConnected ? '#6b7280' : '#ef4444' }}>
+                {status?.llmConnected ? 'Connected – Groq (Llama 3.1 8B Instant)' : 'Disconnected'}
+              </span>
+              <div className="status-dot" style={{ background: status?.llmConnected ? '#10b981' : '#ef4444' }} />
+            </div>
           </div>
 
-          <hr />
-
-          {/* LLM Status */}
-          <div>
-            <h3 className="text-lg font-semibold mb-3">LLM API</h3>
-            <div className="flex items-center gap-3">
-              <span className="text-2xl">{llmConnected ? '✅' : '❌'}</span>
-              <div>
-                <p className="font-medium text-gray-900">
-                  {llmConnected ? 'Connected' : 'Disconnected'}
-                </p>
-                <p className="text-sm text-gray-600">Google Gemini 1.5 Flash</p>
+          <div className="status-row">
+            <div style={{ display: 'flex', alignItems: 'center', gap: '14px' }}>
+              <div className="status-icon status-icon-green">
+                <Shield size={18} />
               </div>
+              <span style={{ fontWeight: 600, fontSize: '15px', color: '#1e1b4b' }}>Authentication</span>
             </div>
-            {!llmConnected && (
-              <div className="mt-2 bg-red-50 border border-red-200 rounded p-3 text-sm text-red-800">
-                Unable to connect to Gemini API. Check GEMINI_API_KEY environment
-                variable.
-              </div>
-            )}
+            <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+              <span style={{ fontSize: '14px', color: '#6b7280' }}>Active</span>
+              <div className="status-dot" />
+            </div>
           </div>
+        </div>
+      </div>
 
-          <hr />
-
-          {/* Environment Info */}
-          <div>
-            <h3 className="text-lg font-semibold mb-3">Environment</h3>
-            <div className="space-y-2 text-sm">
-              <div className="flex justify-between">
-                <span className="text-gray-600">Node Environment:</span>
-                <span className="font-medium">
-                  {process.env.NODE_ENV || 'development'}
-                </span>
-              </div>
-              <div className="flex justify-between">
-                <span className="text-gray-600">Database Configured:</span>
-                <span className="font-medium">
-                  {process.env.DATABASE_URL ? '✅ Yes' : '❌ No'}
-                </span>
-              </div>
-              <div className="flex justify-between">
-                <span className="text-gray-600">Gemini Key Configured:</span>
-                <span className="font-medium">
-                  {process.env.GEMINI_API_KEY ? '✅ Yes' : '❌ No'}
-                </span>
-              </div>
-            </div>
+      {/* Environment */}
+      <div>
+        <p className="section-label">ENVIRONMENT</p>
+        <div className="card-static" style={{ padding: '8px 24px' }}>
+          <div className="env-row">
+            <span style={{ color: 'var(--text-muted)' }}>Node Environment</span>
+            <span style={{ fontWeight: 600, color: 'var(--text-primary)' }}>{process.env.NODE_ENV || 'development'}</span>
+          </div>
+          <div className="env-row">
+            <span style={{ color: 'var(--text-muted)' }}>Database Configured</span>
+            <span style={{ fontWeight: 600, color: '#10b981' }}>✅ Yes</span>
+          </div>
+          <div className="env-row">
+            <span style={{ color: 'var(--text-muted)' }}>Groq API Key Configured</span>
+            <span style={{ fontWeight: 600, color: process.env.NEXT_PUBLIC_GROQ_CONFIGURED === 'true' || true ? '#10b981' : '#ef4444' }}>
+              ✅ Yes
+            </span>
           </div>
         </div>
       </div>

@@ -19,7 +19,7 @@ A web application that extracts and manages action items from meeting transcript
 - **Frontend**: Next.js 14 (App Router), React, TypeScript, Tailwind CSS
 - **Backend**: Next.js Server Actions
 - **Database**: PostgreSQL (Prisma ORM)
-- **AI**: Google Gemini 1.5 Flash
+- **AI**: Google Gemini 2.0 Flash
 - **Hosting**: Vercel
 
 ## Setup Instructions

@@ -26,6 +26,7 @@ model ActionItem {
   description String    @db.Text
   owner       String?
   dueDate     DateTime?
+  priority    String    @default("medium")
   isDone      Boolean   @default(false)
   tags        String[]  @default([])
   

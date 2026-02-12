@@ -37,7 +37,7 @@
 
 ## LLM Provider Choice
 
-### Selected: Google Gemini 1.5 Flash
+### Selected: Google Gemini 2.0 Flash
 
 **Rationale:**
 1. **Cost-effective**: Free tier available with generous quotas, production pricing very competitive

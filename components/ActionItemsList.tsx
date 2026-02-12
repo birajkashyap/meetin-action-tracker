@@ -1,18 +1,23 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import {
   updateActionItem,
   deleteActionItem,
   toggleActionItemDone,
   createActionItem,
 } from '@/app/actions';
+import { Check, X, Pencil, Trash2, Plus, Circle, CheckCircle2, Download, ArrowUp, ArrowRight, ArrowDown } from 'lucide-react';
+import gsap from 'gsap';
+import { useToast } from './ToastProvider';
+import { triggerConfetti } from '@/lib/confetti';
 
 interface ActionItem {
   id: string;
   description: string;
   owner: string | null;
   dueDate: Date | null;
+  priority: string;
   isDone: boolean;
   tags: string[];
 }
@@ -22,13 +27,31 @@ interface ActionItemsListProps {
   initialItems: ActionItem[];
 }
 
+const PRIORITY_CONFIG: Record<string, { label: string; color: string; bg: string; icon: typeof ArrowUp }> = {
+  high: { label: 'High', color: '#ef4444', bg: 'rgba(239,68,68,0.1)', icon: ArrowUp },
+  medium: { label: 'Med', color: '#f59e0b', bg: 'rgba(245,158,11,0.1)', icon: ArrowRight },
+  low: { label: 'Low', color: '#3b82f6', bg: 'rgba(59,130,246,0.1)', icon: ArrowDown },
+};
+
 export function ActionItemsList({ transcriptId, initialItems }: ActionItemsListProps) {
   const [items, setItems] = useState<ActionItem[]>(initialItems);
-  const [filter, setFilter] = useState<'all' | 'open' | 'done'>('all');
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editForm, setEditForm] = useState({ description: '', owner: '', dueDate: '' });
+  const [filter, setFilter] = useState<'all' | 'open' | 'done'>('all');
   const [showAddForm, setShowAddForm] = useState(false);
-  const [addForm, setAddForm] = useState({ description: '', owner: '', dueDate: '' });
+  const [newItem, setNewItem] = useState({ description: '', owner: '', dueDate: '', priority: 'medium' });
+  const listRef = useRef<HTMLDivElement>(null);
+  const { addToast } = useToast();
+
+  useEffect(() => {
+    if (listRef.current) {
+      gsap.fromTo(
+        listRef.current.children,
+        { opacity: 0, x: -10 },
+        { opacity: 1, x: 0, duration: 0.4, stagger: 0.06, ease: 'power2.out' }
+      );
+    }
+  }, [filter]);
 
   const filteredItems = items.filter((item) => {
     if (filter === 'open') return !item.isDone;
@@ -36,21 +59,36 @@ export function ActionItemsList({ transcriptId, initialItems }: ActionItemsListP
     return true;
   });
 
-  const handleToggleDone = async (id: string) => {
-    const response = await toggleActionItemDone(id);
-    if (response.success && response.actionItem) {
-      setItems(
-        items.map((item) => (item.id === id ? response.actionItem! : item))
-      );
+  const openCount = items.filter(i => !i.isDone).length;
+  const doneCount = items.filter(i => i.isDone).length;
+
+  const handleToggle = async (id: string) => {
+    const result = await toggleActionItemDone(id);
+    if (result.success && result.actionItem) {
+      const newItems = items.map((i) => (i.id === id ? { ...i, isDone: result.actionItem!.isDone } : i));
+      setItems(newItems);
+
+      if (result.actionItem.isDone) {
+        addToast('✅ Action item completed!', 'success');
+        // Check if ALL items are now done
+        const allDone = newItems.every((i) => i.isDone);
+        if (allDone && newItems.length > 0) {
+          addToast('🎉 All action items complete! Great work!', 'success');
+          triggerConfetti();
+        }
+      } else {
+        addToast('Item re-opened', 'info');
+      }
     }
   };
 
   const handleDelete = async (id: string) => {
-    if (!confirm('Delete this action item?')) return;
-    
-    const response = await deleteActionItem(id);
-    if (response.success) {
-      setItems(items.filter((item) => item.id !== id));
+    const result = await deleteActionItem(id);
+    if (result.success) {
+      setItems(items.filter((i) => i.id !== id));
+      addToast('🗑️ Action item deleted', 'warning');
+    } else {
+      addToast('Failed to delete item', 'error');
     }
   };
 
@@ -63,248 +101,238 @@ export function ActionItemsList({ transcriptId, initialItems }: ActionItemsListP
     });
   };
 
-  const handleUpdate = async (id: string) => {
-    const response = await updateActionItem(id, {
+  const handleSaveEdit = async () => {
+    if (!editingId) return;
+    const result = await updateActionItem(editingId, {
       description: editForm.description,
       owner: editForm.owner || null,
       dueDate: editForm.dueDate ? new Date(editForm.dueDate) : null,
     });
-
-    if (response.success && response.actionItem) {
+    if (result.success && result.actionItem) {
       setItems(
-        items.map((item) => (item.id === id ? response.actionItem! : item))
+        items.map((i) =>
+          i.id === editingId ? { ...i, ...result.actionItem } : i
+        )
       );
       setEditingId(null);
+      addToast('💾 Changes saved', 'success');
+    } else {
+      addToast('Failed to save changes', 'error');
     }
   };
 
-  const handleAdd = async () => {
-    if (!addForm.description.trim()) return;
-
-    const response = await createActionItem(transcriptId, {
-      description: addForm.description,
-      owner: addForm.owner || null,
-      dueDate: addForm.dueDate || null,
+  const handleAddItem = async () => {
+    if (!newItem.description.trim()) return;
+    const result = await createActionItem(transcriptId, {
+      description: newItem.description,
+      owner: newItem.owner || null,
+      dueDate: newItem.dueDate || null,
+      priority: newItem.priority,
+      tags: [],
     });
-
-    if (response.success && response.actionItem) {
-      setItems([...items, response.actionItem]);
-      setAddForm({ description: '', owner: '', dueDate: '' });
+    if (result.success && result.actionItem) {
+      setItems([...items, result.actionItem as ActionItem]);
+      setNewItem({ description: '', owner: '', dueDate: '', priority: 'medium' });
       setShowAddForm(false);
+      addToast('➕ New action item added', 'success');
+    } else {
+      addToast('Failed to add item', 'error');
     }
+  };
+
+  const PriorityBadge = ({ priority }: { priority: string }) => {
+    const config = PRIORITY_CONFIG[priority] || PRIORITY_CONFIG.medium;
+    const Icon = config.icon;
+    return (
+      <span style={{
+        display: 'inline-flex',
+        alignItems: 'center',
+        gap: '3px',
+        fontSize: '11px',
+        fontWeight: 600,
+        padding: '2px 8px',
+        borderRadius: '6px',
+        color: config.color,
+        background: config.bg,
+        border: `1px solid ${config.color}25`,
+        textTransform: 'uppercase',
+        letterSpacing: '0.03em',
+      }}>
+        <Icon size={10} />
+        {config.label}
+      </span>
+    );
   };
 
   return (
-    <div className="space-y-4">
-      {/* Filter buttons */}
-      <div className="flex gap-2">
-        <button
-          onClick={() => setFilter('all')}
-          className={`px-4 py-2 rounded-lg font-medium transition-colors ${
-            filter === 'all'
-              ? 'bg-blue-600 text-white'
-              : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
-          }`}
-        >
+    <div>
+      {/* Filters */}
+      <div style={{ display: 'flex', gap: '8px', marginBottom: '16px', flexWrap: 'wrap', alignItems: 'center' }}>
+        <button className={`filter-btn ${filter === 'all' ? 'active' : ''}`} onClick={() => setFilter('all')}>
           All ({items.length})
         </button>
+        <button className={`filter-btn ${filter === 'open' ? 'active' : ''}`} onClick={() => setFilter('open')}>
+          Open ({openCount})
+        </button>
+        <button className={`filter-btn ${filter === 'done' ? 'active' : ''}`} onClick={() => setFilter('done')}>
+          Done ({doneCount})
+        </button>
+        <div style={{ flex: 1 }} />
         <button
-          onClick={() => setFilter('open')}
-          className={`px-4 py-2 rounded-lg font-medium transition-colors ${
-            filter === 'open'
-              ? 'bg-blue-600 text-white'
-              : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
-          }`}
+          className="filter-btn"
+          onClick={() => setShowAddForm(!showAddForm)}
+          style={{ display: 'flex', alignItems: 'center', gap: '4px' }}
         >
-          Open ({items.filter((i) => !i.isDone).length})
+          <Plus size={14} />
+          Add Item
         </button>
         <button
-          onClick={() => setFilter('done')}
-          className={`px-4 py-2 rounded-lg font-medium transition-colors ${
-            filter === 'done'
-              ? 'bg-blue-600 text-white'
-              : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
-          }`}
+          className="filter-btn"
+          onClick={() => window.open(`/api/export?transcriptId=${transcriptId}`, '_blank')}
+          style={{ display: 'flex', alignItems: 'center', gap: '4px' }}
+          title="Export these items as CSV"
         >
-          Done ({items.filter((i) => i.isDone).length})
+          <Download size={14} />
+          Export
         </button>
       </div>
 
-      {/* Add new item button */}
-      {!showAddForm && (
-        <button
-          onClick={() => setShowAddForm(true)}
-          className="w-full py-2 border-2 border-dashed border-gray-300 rounded-lg text-gray-600 hover:border-blue-500 hover:text-blue-600 transition-colors"
-        >
-          + Add Action Item
-        </button>
-      )}
-
-      {/* Add form */}
+      {/* Add Form */}
       {showAddForm && (
-        <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 space-y-3">
-          <input
-            type="text"
-            value={addForm.description}
-            onChange={(e) => setAddForm({ ...addForm, description: e.target.value })}
-            placeholder="Task description"
-            className="w-full px-3 py-2 border border-gray-300 rounded"
-          />
-          <div className="grid grid-cols-2 gap-2">
+        <div className="action-item-card" style={{ marginBottom: '12px', padding: '16px' }}>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
             <input
               type="text"
-              value={addForm.owner}
-              onChange={(e) => setAddForm({ ...addForm, owner: e.target.value })}
-              placeholder="Owner (optional)"
-              className="px-3 py-2 border border-gray-300 rounded"
+              placeholder="Task description..."
+              value={newItem.description}
+              onChange={(e) => setNewItem({ ...newItem, description: e.target.value })}
+              style={{ padding: '8px 12px', border: '1px solid var(--border-input)', borderRadius: '8px', fontSize: '14px', outline: 'none', background: 'var(--bg-input)', color: 'var(--text-primary)' }}
             />
-            <input
-              type="date"
-              value={addForm.dueDate}
-              onChange={(e) => setAddForm({ ...addForm, dueDate: e.target.value })}
-              className="px-3 py-2 border border-gray-300 rounded"
-            />
-          </div>
-          <div className="flex gap-2">
-            <button
-              onClick={handleAdd}
-              className="flex-1 bg-blue-600 text-white py-2 rounded hover:bg-blue-700"
-            >
-              Add
-            </button>
-            <button
-              onClick={() => {
-                setShowAddForm(false);
-                setAddForm({ description: '', owner: '', dueDate: '' });
-              }}
-              className="flex-1 bg-gray-200 text-gray-700 py-2 rounded hover:bg-gray-300"
-            >
-              Cancel
-            </button>
+            <div style={{ display: 'flex', gap: '8px' }}>
+              <input
+                type="text"
+                placeholder="Owner"
+                value={newItem.owner}
+                onChange={(e) => setNewItem({ ...newItem, owner: e.target.value })}
+                style={{ flex: 1, padding: '8px 12px', border: '1px solid var(--border-input)', borderRadius: '8px', fontSize: '13px', outline: 'none', background: 'var(--bg-input)', color: 'var(--text-primary)' }}
+              />
+              <input
+                type="date"
+                value={newItem.dueDate}
+                onChange={(e) => setNewItem({ ...newItem, dueDate: e.target.value })}
+                style={{ padding: '8px 12px', border: '1px solid var(--border-input)', borderRadius: '8px', fontSize: '13px', outline: 'none', background: 'var(--bg-input)', color: 'var(--text-primary)' }}
+              />
+              <select
+                value={newItem.priority}
+                onChange={(e) => setNewItem({ ...newItem, priority: e.target.value })}
+                style={{ padding: '8px 12px', border: '1px solid var(--border-input)', borderRadius: '8px', fontSize: '13px', outline: 'none', background: 'var(--bg-input)', color: 'var(--text-primary)' }}
+              >
+                <option value="high">🔴 High</option>
+                <option value="medium">🟡 Medium</option>
+                <option value="low">🔵 Low</option>
+              </select>
+            </div>
+            <div style={{ display: 'flex', gap: '8px', justifyContent: 'flex-end' }}>
+              <button className="action-btn" onClick={() => setShowAddForm(false)}>
+                <X size={13} /> Cancel
+              </button>
+              <button className="action-btn" onClick={handleAddItem} style={{ background: '#7c3aed', color: 'white', border: 'none' }}>
+                <Check size={13} /> Save
+              </button>
+            </div>
           </div>
         </div>
       )}
 
-      {/* Action items list */}
-      {filteredItems.length === 0 ? (
-        <p className="text-gray-500 text-center py-8">No action items found</p>
-      ) : (
-        <div className="space-y-3">
-          {filteredItems.map((item) => (
-            <div
-              key={item.id}
-              className={`bg-white border rounded-lg p-4 ${
-                item.isDone ? 'border-green-200 bg-green-50' : 'border-gray-200'
-              }`}
-            >
-              {editingId === item.id ? (
-                // Edit mode
-                <div className="space-y-3">
-                  <textarea
-                    value={editForm.description}
-                    onChange={(e) =>
-                      setEditForm({ ...editForm, description: e.target.value })
-                    }
-                    className="w-full px-3 py-2 border border-gray-300 rounded"
-                    rows={3}
+      {/* Items List */}
+      <div ref={listRef} style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+        {filteredItems.map((item) => (
+          <div key={item.id} className={`action-item-card ${item.isDone ? 'action-item-done' : ''}`}>
+            {editingId === item.id ? (
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                <input
+                  type="text"
+                  value={editForm.description}
+                  onChange={(e) => setEditForm({ ...editForm, description: e.target.value })}
+                  style={{ padding: '8px 12px', border: '1px solid var(--border-input)', borderRadius: '8px', fontSize: '14px', outline: 'none', background: 'var(--bg-input)', color: 'var(--text-primary)' }}
+                />
+                <div style={{ display: 'flex', gap: '8px' }}>
+                  <input
+                    type="text"
+                    placeholder="Owner"
+                    value={editForm.owner}
+                    onChange={(e) => setEditForm({ ...editForm, owner: e.target.value })}
+                    style={{ flex: 1, padding: '8px 12px', border: '1px solid var(--border-input)', borderRadius: '8px', fontSize: '13px', outline: 'none', background: 'var(--bg-input)', color: 'var(--text-primary)' }}
                   />
-                  <div className="grid grid-cols-2 gap-2">
-                    <input
-                      type="text"
-                      value={editForm.owner}
-                      onChange={(e) =>
-                        setEditForm({ ...editForm, owner: e.target.value })
-                      }
-                      placeholder="Owner"
-                      className="px-3 py-2 border border-gray-300 rounded"
-                    />
-                    <input
-                      type="date"
-                      value={editForm.dueDate}
-                      onChange={(e) =>
-                        setEditForm({ ...editForm, dueDate: e.target.value })
-                      }
-                      className="px-3 py-2 border border-gray-300 rounded"
-                    />
+                  <input
+                    type="date"
+                    value={editForm.dueDate}
+                    onChange={(e) => setEditForm({ ...editForm, dueDate: e.target.value })}
+                    style={{ padding: '8px 12px', border: '1px solid var(--border-input)', borderRadius: '8px', fontSize: '13px', outline: 'none', background: 'var(--bg-input)', color: 'var(--text-primary)' }}
+                  />
+                </div>
+                <div style={{ display: 'flex', gap: '8px', justifyContent: 'flex-end' }}>
+                  <button className="action-btn" onClick={() => setEditingId(null)}>
+                    <X size={13} /> Cancel
+                  </button>
+                  <button className="action-btn" onClick={handleSaveEdit} style={{ background: '#7c3aed', color: 'white', border: 'none' }}>
+                    <Check size={13} /> Save
+                  </button>
+                </div>
+              </div>
+            ) : (
+              <div style={{ display: 'flex', alignItems: 'flex-start', gap: '12px' }}>
+                {/* Checkbox */}
+                <button
+                  onClick={() => handleToggle(item.id)}
+                  style={{ background: 'none', border: 'none', cursor: 'pointer', padding: '2px', flexShrink: 0, marginTop: '1px' }}
+                >
+                  {item.isDone ? (
+                    <CheckCircle2 size={20} color="#10b981" />
+                  ) : (
+                    <Circle size={20} color="var(--checkbox-empty)" />
+                  )}
+                </button>
+
+                {/* Content */}
+                <div style={{ flex: 1, minWidth: 0 }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '4px' }}>
+                    <p className="action-item-text" style={{ fontSize: '14px', fontWeight: 500, color: 'var(--text-primary)', margin: 0 }}>
+                      {item.description}
+                    </p>
+                    <PriorityBadge priority={item.priority || 'medium'} />
                   </div>
-                  <div className="flex gap-2">
-                    <button
-                      onClick={() => handleUpdate(item.id)}
-                      className="flex-1 bg-blue-600 text-white py-2 rounded hover:bg-blue-700"
-                    >
-                      Save
-                    </button>
-                    <button
-                      onClick={() => setEditingId(null)}
-                      className="flex-1 bg-gray-200 text-gray-700 py-2 rounded hover:bg-gray-300"
-                    >
-                      Cancel
-                    </button>
+                  <div style={{ display: 'flex', gap: '12px', flexWrap: 'wrap', alignItems: 'center' }}>
+                    {item.owner && (
+                      <span className="meta-text">👤 {item.owner}</span>
+                    )}
+                    {item.dueDate && (
+                      <span className="meta-text">📅 {new Date(item.dueDate).toLocaleDateString()}</span>
+                    )}
+                    {item.tags?.map((tag) => (
+                      <span key={tag} className="tag-badge">{tag}</span>
+                    ))}
                   </div>
                 </div>
-              ) : (
-                // View mode
-                <div>
-                  <div className="flex items-start gap-3">
-                    <input
-                      type="checkbox"
-                      checked={item.isDone}
-                      onChange={() => handleToggleDone(item.id)}
-                      className="mt-1 w-5 h-5 text-blue-600 rounded cursor-pointer"
-                    />
-                    <div className="flex-1">
-                      <p
-                        className={`font-medium ${
-                          item.isDone ? 'line-through text-gray-500' : 'text-gray-900'
-                        }`}
-                      >
-                        {item.description}
-                      </p>
-                      <div className="mt-2 flex flex-wrap gap-4 text-sm text-gray-600">
-                        {item.owner && (
-                          <span>
-                            👤 <strong>Owner:</strong> {item.owner}
-                          </span>
-                        )}
-                        {item.dueDate && (
-                          <span>
-                            📅 <strong>Due:</strong>{' '}
-                            {new Date(item.dueDate).toLocaleDateString()}
-                          </span>
-                        )}
-                      </div>
-                      {item.tags.length > 0 && (
-                        <div className="mt-2 flex gap-2">
-                          {item.tags.map((tag, idx) => (
-                            <span
-                              key={idx}
-                              className="px-2 py-1 bg-gray-200 text-gray-700 text-xs rounded"
-                            >
-                              {tag}
-                            </span>
-                          ))}
-                        </div>
-                      )}
-                    </div>
-                  </div>
-                  <div className="mt-3 flex gap-2">
-                    <button
-                      onClick={() => startEdit(item)}
-                      className="text-sm text-blue-600 hover:text-blue-800"
-                    >
-                      Edit
-                    </button>
-                    <button
-                      onClick={() => handleDelete(item.id)}
-                      className="text-sm text-red-600 hover:text-red-800"
-                    >
-                      Delete
-                    </button>
-                  </div>
+
+                {/* Actions */}
+                <div style={{ display: 'flex', gap: '4px', flexShrink: 0 }}>
+                  <button className="action-btn" onClick={() => startEdit(item)}>
+                    <Pencil size={12} />
+                  </button>
+                  <button className="action-btn action-btn-danger" onClick={() => handleDelete(item.id)}>
+                    <Trash2 size={12} />
+                  </button>
                 </div>
-              )}
-            </div>
-          ))}
+              </div>
+            )}
+          </div>
+        ))}
+      </div>
+
+      {filteredItems.length === 0 && (
+        <div style={{ textAlign: 'center', padding: '32px', color: 'var(--text-muted)', fontSize: '14px' }}>
+          No action items found for this filter.
         </div>
       )}
     </div>

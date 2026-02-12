@@ -2,14 +2,17 @@
 
 import { prisma } from '@/lib/prisma';
 import { EXTRACTION_PROMPT_V1 } from '@/lib/prompts';
-import { GoogleGenerativeAI } from '@google/generative-ai';
+import Groq from 'groq-sdk';
 
-const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY || '');
+const groq = new Groq({
+  apiKey: process.env.GROQ_API_KEY,
+});
 
 interface ActionItemInput {
   description: string;
   owner?: string | null;
   dueDate?: string | null;
+  priority?: string;
   tags?: string[];
 }
 
@@ -34,17 +37,18 @@ export async function processTranscript(text: string) {
       };
     }
 
-    // Call Gemini API
-    const model = genAI.getGenerativeModel({
-      model: 'gemini-1.5-flash',
-      generationConfig: {
-        responseMimeType: 'application/json',
-      },
+    // Call Groq API
+    const completion = await groq.chat.completions.create({
+      model: 'llama-3.1-8b-instant',
+      messages: [
+        { role: 'system', content: EXTRACTION_PROMPT_V1 },
+        { role: 'user', content: `Extract action items from this transcript:\n\n${text}` },
+      ],
+      response_format: { type: 'json_object' },
+      temperature: 0.3,
     });
 
-    const prompt = `${EXTRACTION_PROMPT_V1}\n\nTranscript:\n${text}`;
-    const result = await model.generateContent(prompt);
-    const responseText = result.response.text();
+    const responseText = completion.choices[0]?.message?.content;
 
     if (!responseText) {
       throw new Error('No response from LLM');
@@ -64,13 +68,14 @@ export async function processTranscript(text: string) {
         metadata: {
           wordCount: text.split(/\s+/).length,
           itemCount: llmResponse.actionItems.length,
-          modelUsed: 'gemini-1.5-flash',
+          modelUsed: 'llama-3.1-8b-instant',
         },
         actionItems: {
           create: llmResponse.actionItems.map((item) => ({
             description: item.description,
             owner: item.owner || null,
             dueDate: item.dueDate ? new Date(item.dueDate) : null,
+            priority: item.priority || 'medium',
             tags: item.tags || [],
             isDone: false,
           })),
@@ -178,6 +183,7 @@ export async function createActionItem(transcriptId: string, data: ActionItemInp
         description: data.description,
         owner: data.owner || null,
         dueDate: data.dueDate ? new Date(data.dueDate) : null,
+        priority: data.priority || 'medium',
         tags: data.tags || [],
         isDone: false,
       },

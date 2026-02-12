@@ -1,9 +1,13 @@
 import type { Metadata } from "next";
+import { Navigation } from "@/components/Navigation";
+import { ThemeProvider } from "@/components/ThemeProvider";
+import { ToastProvider } from "@/components/ToastProvider";
+import { AnimatedBackground } from "@/components/AnimatedBackground";
 import "./globals.css";
 
 export const metadata: Metadata = {
   title: "Meeting Action Items Tracker",
-  description: "Extract and manage action items from meeting transcripts",
+  description: "AI-powered meeting transcript analyzer — extract and manage action items automatically",
 };
 
 export default function RootLayout({
@@ -12,27 +16,23 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en">
-      <body className="bg-gray-50 min-h-screen">
-        <header className="bg-white border-b shadow-sm">
-          <div className="max-w-6xl mx-auto px-4 py-4">
-            <h1 className="text-2xl font-bold text-gray-900">
-              Meeting Action Items Tracker
-            </h1>
-            <nav className="mt-2 flex gap-4 text-sm">
-              <a href="/" className="text-blue-600 hover:text-blue-800">
-                Home
-              </a>
-              <a href="/history" className="text-blue-600 hover:text-blue-800">
-                History
-              </a>
-              <a href="/status" className="text-blue-600 hover:text-blue-800">
-                Status
-              </a>
-            </nav>
-          </div>
-        </header>
-        <main className="max-w-6xl mx-auto px-4 py-8">{children}</main>
+    <html lang="en" suppressHydrationWarning>
+      <head>
+        <link
+          href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap"
+          rel="stylesheet"
+        />
+      </head>
+      <body>
+        <ThemeProvider>
+          <AnimatedBackground />
+          <ToastProvider>
+            <Navigation />
+            <main style={{ position: 'relative', zIndex: 1, maxWidth: '1100px', margin: '0 auto', padding: '100px 24px 64px' }}>
+              {children}
+            </main>
+          </ToastProvider>
+        </ThemeProvider>
       </body>
     </html>
   );
