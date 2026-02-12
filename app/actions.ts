@@ -37,11 +37,14 @@ export async function processTranscript(text: string) {
       };
     }
 
+    const currentDate = new Date().toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
+    const systemPrompt = `${EXTRACTION_PROMPT_V1}\n\nCurrent Date: ${currentDate}`;
+
     // Call Groq API
     const completion = await groq.chat.completions.create({
       model: 'llama-3.1-8b-instant',
       messages: [
-        { role: 'system', content: EXTRACTION_PROMPT_V1 },
+        { role: 'system', content: systemPrompt },
         { role: 'user', content: `Extract action items from this transcript:\n\n${text}` },
       ],
       response_format: { type: 'json_object' },
