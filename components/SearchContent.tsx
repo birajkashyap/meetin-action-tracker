@@ -178,9 +178,9 @@ export default function SearchContent({ items }: SearchContentProps) {
                       <span className="meta-text">👤 {item.owner}</span>
                     )}
                     {item.dueDate && (
-                      <span className="meta-text">📅 {new Date(item.dueDate).toLocaleDateString()}</span>
+                      <span className="meta-text" suppressHydrationWarning>📅 {new Date(item.dueDate).toLocaleDateString()}</span>
                     )}
-                    <span className="meta-text" style={{ opacity: 0.7 }}>
+                    <span className="meta-text" style={{ opacity: 0.7 }} suppressHydrationWarning>
                       🕐 {new Date(item.transcriptDate).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
                     </span>
                     {item.tags?.map((tag) => (
