@@ -37,27 +37,27 @@
 
 ## LLM Provider Choice
 
-### Selected: Google Gemini 2.0 Flash
+### Selected: Groq (Llama 3.1 8B Instant)
 
 **Rationale:**
-1. **Cost-effective**: Free tier available with generous quotas, production pricing very competitive
-2. **JSON mode**: Built-in `responseMimeType: 'application/json'` ensures valid JSON output
-3. **Speed**: ~1-2 second response times for typical transcripts
-4. **Reliability**: Excellent at following structured extraction instructions
-5. **API simplicity**: Official Google Generative AI SDK with excellent TypeScript support
-6. **Availability**: User had Gemini API key readily available
+1.  **Speed**: Extremely fast inference (~200ms) suitable for real-time interaction.
+2.  **Cost**: Free tier available (currently) with high limits.
+3.  **Quality**: Llama 3.1 8B is sufficient for extraction tasks.
+4.  **JSON mode**: JSON mode enforcement ensures reliable output.
+5.  **API simplicity**: API compatible with OpenAI SDK, making integration trivial.
+6.  **Availability**: Easy to obtain API key.
 
 **Alternatives Considered:**
-- **OpenAI GPT-4o-mini**: Great quality but requires paid API key
-- **Anthropic Claude**: Great quality but more expensive, requires different setup
-- **GPT-4**: Overkill for this task, expensive
+- **Google Gemini 2.0 Flash**: Good alternative, fast and cheap.
+- **OpenAI GPT-4o-mini**: Robust but paid.
+- **Anthropic Claude**: Good but pricier/slower.
 
 ## Prompt Engineering Approach
 
 - **Version control**: Prompt stored in `lib/prompts.ts` as `EXTRACTION_PROMPT_V1` for auditability
 - **Explicit rules**: Clear enumeration of what to extract and what to skip
 - **Output schema**: Detailed JSON structure specification to minimize parsing errors
-- **JSON response mode**: Gemini configured with `responseMimeType: 'application/json'` for reliable parsing
+- **JSON response mode**: Groq configured with `response_format: { type: 'json_object' }` for reliable parsing
 - **Testing**: Iterated based on Gemini's response format to optimize quality
 
 ## AI Tools Used During Development

@@ -58,7 +58,7 @@ Design a Prisma schema for a meeting action items tracker with the following req
 ### Server Actions
 ```
 Create Next.js server actions for:
-1. Processing a transcript using OpenAI API with JSON mode
+1. Processing a transcript using Groq API with JSON mode
 2. CRUD operations for action items (create, update, delete, toggle done)
 3. Implement "keep last 5 transcripts" cleanup logic
 4. Include proper error handling and TypeScript types
@@ -80,7 +80,7 @@ Use Tailwind CSS for styling.
 ```
 Create a Next.js server component for a status page that checks:
 - Database connectivity (PostgreSQL via Prisma)
-- OpenAI API connectivity
+- OpenAI API connectivity (via Groq SDK)
 - Display overall system health
 - Show environment configuration status
 ```
@@ -97,7 +97,7 @@ Build a page to display the last 5 transcripts with:
 ### Deployment Preparation
 ```
 What environment variables do I need to configure for deploying a Next.js app
-to Vercel with Prisma and OpenAI integration?
+to Vercel with Prisma and Groq integration?
 ```
 
 ### Testing Prompts

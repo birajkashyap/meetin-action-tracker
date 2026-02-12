@@ -11,15 +11,16 @@ A web application that extracts and manages action items from meeting transcript
 - **AI-powered extraction**: Paste meeting transcripts and automatically extract action items with owners, due dates, and tags
 - **Full CRUD operations**: Create, read, update, and delete action items
 - **Task management**: Mark items as done/open, filter by status
+- **File Upload**: Support for `.txt` and `.docx` transcript imports
 - **History tracking**: View last 5 processed transcripts
 - **Health monitoring**: Status page showing system health
 
 ## Tech Stack
 
-- **Frontend**: Next.js 14 (App Router), React, TypeScript, Tailwind CSS
+- **Frontend**: Next.js 16 (App Router), React 19, TypeScript, Tailwind CSS 4
 - **Backend**: Next.js Server Actions
 - **Database**: PostgreSQL (Prisma ORM)
-- **AI**: Google Gemini 2.0 Flash
+- **AI**: Groq (Llama 3.1 8B Instant)
 - **Hosting**: Vercel
 
 ## Setup Instructions
@@ -28,7 +29,7 @@ A web application that extracts and manages action items from meeting transcript
 
 - Node.js 18+ installed
 - PostgreSQL database (Neon, Vercel Postgres, or local)
-- Google Gemini API key (free from https://aistudio.google.com/app/apikey)
+- Groq API key (free from https://console.groq.com)
 
 ### Installation
 
@@ -50,7 +51,7 @@ cp .env.example .env
 
 Edit `.env` and add:
 - `DATABASE_URL`: Your PostgreSQL connection string
-- `GEMINI_API_KEY`: Your Google Gemini API key
+- `GROQ_API_KEY`: Your Groq API key
 
 4. Initialize the database:
 ```bash

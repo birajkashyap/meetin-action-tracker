@@ -2,12 +2,13 @@
 
 ## 🚀 Next Steps to Run Locally
 
-1. **Add your Gemini API key to `.env`**
-   - Get one FREE from: https://aistudio.google.com/app/apikey
-   - Replace `your-gemini-api-key-here` in `.env` with your actual key
+15. **Add your Groq API key to `.env`**
+   - Get one FREE from: https://console.groq.com
+   - Replace `your-groq-api-key-here` in `.env` with your actual key
 
 2. **Initialize the database**
    ```bash
+   npx prisma generate
    npx prisma db push
    ```
 
@@ -47,7 +48,7 @@
 3. Import your repository
 4. Add environment variables:
    - `DATABASE_URL` (your Neon URL - already configured)
-   - `GEMINI_API_KEY` (your Gemini key)
+   - `GROQ_API_KEY` (your Groq key)
 5. Deploy!
 
 6. After deployment, your database should auto-migrate. If not:

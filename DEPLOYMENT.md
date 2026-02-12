@@ -5,7 +5,7 @@ This guide will help you deploy the Meeting Action Items Tracker to Vercel.
 ## Prerequisites
 
 1. A Vercel account (free at https://vercel.com)
-2. An OpenAI API key (from https://platform.openai.com/api-keys)
+2. An Groq API key (from https://console.groq.com)
 3. A PostgreSQL database (use Neon, Vercel Postgres, or any other provider)
 
 ## Step 1: Set Up Database
@@ -42,7 +42,7 @@ vercel
 4. Set environment variables:
 ```bash
 vercel env add DATABASE_URL
-vercel env add OPENAI_API_KEY
+vercel env add GROQ_API_KEY
 ```
 
 Paste the values when prompted.
@@ -54,7 +54,7 @@ Paste the values when prompted.
 3. Import your repository
 4. Add environment variables:
    - `DATABASE_URL`: Your PostgreSQL connection string
-   - `OPENAI_API_KEY`: Your OpenAI API key
+   - `GROQ_API_KEY`: Your Groq API key
 5. Deploy
 
 ## Step 3: Initialize Database
@@ -84,10 +84,10 @@ npx prisma db push
 - Ensure your `DATABASE_URL` includes `?sslmode=require` for hosted databases
 - Example: `postgresql://user:pass@host/db?sslmode=require`
 
-### OpenAI API Errors
+### Groq API Errors
 
 - Verify your API key is active
-- Check you have credits in your OpenAI account
+- Check your rate limits on Groq Console
 
 ### Build Failures
 
@@ -99,8 +99,18 @@ npx prisma db push
 
 ```env
 DATABASE_URL="postgresql://user:password@host:5432/dbname?sslmode=require"
-OPENAI_API_KEY="sk-proj-..."
+GROQ_API_KEY="gsk_..."
 ```
+
+## Critical: Vercel Build Script
+
+For the app to work on Vercel, you often need to generate the Prisma Client during the build. We have updated `package.json` to handle this automatically:
+
+```json
+"build": "prisma generate && next build"
+```
+
+If you see "Prisma Client" errors, verify this script is present.
 
 ## Post-Deployment
 

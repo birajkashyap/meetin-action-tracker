@@ -111,7 +111,7 @@ export function ActionItemsList({ transcriptId, initialItems }: ActionItemsListP
     if (result.success && result.actionItem) {
       setItems(
         items.map((i) =>
-          i.id === editingId ? { ...i, ...result.actionItem } : i
+          i.id === editingId ? { ...i, ...result.actionItem as unknown as ActionItem } : i
         )
       );
       setEditingId(null);
@@ -131,7 +131,7 @@ export function ActionItemsList({ transcriptId, initialItems }: ActionItemsListP
       tags: [],
     });
     if (result.success && result.actionItem) {
-      setItems([...items, result.actionItem as ActionItem]);
+      setItems([...items, result.actionItem as unknown as ActionItem]);
       setNewItem({ description: '', owner: '', dueDate: '', priority: 'medium' });
       setShowAddForm(false);
       addToast('➕ New action item added', 'success');
