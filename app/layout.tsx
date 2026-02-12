@@ -10,6 +10,8 @@ export const metadata: Metadata = {
   description: "AI-powered meeting transcript analyzer — extract and manage action items automatically",
 };
 
+import { Footer } from "@/components/Footer";
+
 export default function RootLayout({
   children,
 }: Readonly<{
@@ -27,10 +29,13 @@ export default function RootLayout({
         <ThemeProvider>
           <AnimatedBackground />
           <ToastProvider>
-            <Navigation />
-            <main style={{ position: 'relative', zIndex: 1, maxWidth: '1100px', margin: '0 auto', padding: '100px 24px 64px' }}>
-              {children}
-            </main>
+            <div style={{ display: 'flex', flexDirection: 'column', minHeight: '100vh' }}>
+              <Navigation />
+              <main style={{ flex: 1, position: 'relative', zIndex: 1, maxWidth: '1100px', margin: '0 auto', padding: '100px 24px 64px', width: '100%' }}>
+                {children}
+              </main>
+              <Footer />
+            </div>
           </ToastProvider>
         </ThemeProvider>
       </body>

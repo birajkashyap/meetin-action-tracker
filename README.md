@@ -4,7 +4,7 @@ A web application that extracts and manages action items from meeting transcript
 
 ## 🚀 Live Demo
 
-[Add your Vercel URL here after deployment]
+https://meetin-action-tracker.vercel.app/search
 
 ## Features
 

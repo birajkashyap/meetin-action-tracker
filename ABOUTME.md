@@ -1,33 +1,13 @@
 # About Me
 
-## Name
-[Your Name Here]
+## Developer: Biraj Kashyap
+
+- **Portfolio**: [https://birajkashyap.vercel.app/](https://birajkashyap.vercel.app/)
+- **LinkedIn**: [https://www.linkedin.com/in/biraj-kashyap-2194b0226/](https://www.linkedin.com/in/biraj-kashyap-2194b0226/)
+- **GitHub**: [https://github.com/birajkashyap](https://github.com/birajkashyap)
+
+---
 
 ## Resume
 
-[Add your resume content here - either paste the text directly or provide a link]
-
-Example format if pasting:
-
-```
-EDUCATION
-- Degree, University Name, Year
-
-EXPERIENCE
-- Company Name, Role, Dates
-  - Responsibility 1
-  - Responsibility 2
-
-SKILLS
-- Programming Languages: TypeScript, Python, etc.
-- Technologies: React, Next.js, etc.
-
-CONTACT
-- Email: your.email@example.com
-- LinkedIn: linkedin.com/in/yourprofile
-- GitHub: github.com/yourusername
-```
-
-Or provide a link:
-
-Resume link: [https://yourportfolio.com/resume](https://yourportfolio.com/resume)
+[Link to Resume] (Add your resume link here)
