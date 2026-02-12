@@ -10,4 +10,4 @@
 
 ## Resume
 
-[Link to Resume] (Add your resume link here)
+https://drive.google.com/file/d/1pKqdWDkq1bu1YRp9wzZQIlJfgpKiZVpN/view?usp=sharing
