@@ -39,7 +39,12 @@ export function ActionItemsList({ transcriptId, initialItems }: ActionItemsListP
   const [editForm, setEditForm] = useState({ description: '', owner: '', dueDate: '' });
   const [filter, setFilter] = useState<'all' | 'open' | 'done'>('all');
   const [showAddForm, setShowAddForm] = useState(false);
-  const [newItem, setNewItem] = useState({ description: '', owner: '', dueDate: '', priority: 'medium' });
+  const [newItem, setNewItem] = useState<{
+    description: string;
+    owner: string;
+    dueDate: string;
+    priority: 'high' | 'medium' | 'low';
+  }>({ description: '', owner: '', dueDate: '', priority: 'medium' });
   const listRef = useRef<HTMLDivElement>(null);
   const { addToast } = useToast();
 
@@ -224,7 +229,7 @@ export function ActionItemsList({ transcriptId, initialItems }: ActionItemsListP
               />
               <select
                 value={newItem.priority}
-                onChange={(e) => setNewItem({ ...newItem, priority: e.target.value })}
+                onChange={(e) => setNewItem({ ...newItem, priority: e.target.value as 'high' | 'medium' | 'low' })}
                 style={{ padding: '8px 12px', border: '1px solid var(--border-input)', borderRadius: '8px', fontSize: '13px', outline: 'none', background: 'var(--bg-input)', color: 'var(--text-primary)' }}
               >
                 <option value="high">🔴 High</option>

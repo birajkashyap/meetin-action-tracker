@@ -125,6 +125,8 @@ function HistoryContent({ transcripts }: HistoryPageProps) {
                     borderBottom: '1px solid var(--border-light)',
                     borderRadius: '0 0 14px 14px',
                     overflow: 'hidden',
+                    willChange: 'height',
+                    transform: 'translate3d(0,0,0)',
                   }}
                 >
                   {/* Transcript snippet */}

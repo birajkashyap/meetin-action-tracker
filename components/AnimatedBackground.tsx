@@ -46,6 +46,8 @@ export function AnimatedBackground() {
           ? '#050510'
           : 'linear-gradient(135deg, #fdfbf7 0%, #ebf4ff 50%, #f3e8ff 100%)',
         transition: 'background 0.5s ease',
+        transform: 'translate3d(0,0,0)', // Hardware acceleration
+        backfaceVisibility: 'hidden',
       }}
     >
       {/* Primary purple orb — top right */}
@@ -63,6 +65,8 @@ export function AnimatedBackground() {
           right: '-10%',
           filter: isDark ? 'blur(80px)' : 'blur(90px)',
           transition: 'background 0.5s ease, filter 0.5s ease',
+          willChange: 'transform', // 
+          transform: 'translate3d(0,0,0)',
         }}
       />
 
@@ -81,6 +85,8 @@ export function AnimatedBackground() {
           left: '-8%',
           filter: isDark ? 'blur(70px)' : 'blur(80px)',
           transition: 'background 0.5s ease, filter 0.5s ease',
+          willChange: 'transform',
+          transform: 'translate3d(0,0,0)',
         }}
       />
 
@@ -99,6 +105,8 @@ export function AnimatedBackground() {
           left: '20%',
           filter: isDark ? 'blur(60px)' : 'blur(70px)',
           transition: 'background 0.5s ease, filter 0.5s ease',
+          willChange: 'transform',
+          transform: 'translate3d(0,0,0)',
         }}
       />
 
@@ -117,6 +125,8 @@ export function AnimatedBackground() {
           right: '15%',
           filter: isDark ? 'blur(50px)' : 'blur(60px)',
           transition: 'background 0.5s ease, filter 0.5s ease',
+          willChange: 'transform',
+          transform: 'translate3d(0,0,0)',
         }}
       />
     </div>
